@@ -138,9 +138,9 @@ def infer_column(name: str, values: list, sample_size: int = 100) -> ColumnMeta:
     max_len = max(len(v) for v in non_null)
     if max_len > 2000:
         return ColumnMeta(
-            name=name, detected_type="clob", oracle_type="CLOB",
+            name=name, detected_type="varchar", oracle_type="VARCHAR2(4000)",
             nullable=nullable, confidence="medium",
-            note=f"Max length {max_len} exceeds VARCHAR2 safe zone — using CLOB",
+            note=f"Max length {max_len} — capped at VARCHAR2(4000)",
             sample_values=[v[:80] + "..." for v in non_null[:3]],
         )
 

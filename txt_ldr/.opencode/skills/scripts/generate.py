@@ -179,7 +179,7 @@ def main():
         else:
             ai_result         = json.loads(result.stdout)
             schema, changelog = apply_ai_result(schema, ai_result)
-            index_suggestions = ai_result.get("index_suggestions", [])
+            index_suggestions = []
             general_notes     = ai_result.get("general_notes", [])
 
             if changelog:
@@ -199,9 +199,6 @@ def main():
 
     ddl = generate_create_table(schema, table_name, args.schema)
     ctl = generate_ctl(schema, table_name, csv_path.name, args.delimiter, args.enclosure)
-
-    if index_suggestions:
-        ddl += "\n\n-- Index suggestions\n" + "\n".join(index_suggestions)
 
     ddl_path.write_text(ddl)
     ctl_path.write_text(ctl)

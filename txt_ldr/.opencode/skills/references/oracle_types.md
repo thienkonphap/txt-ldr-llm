@@ -2,18 +2,38 @@
 
 ## VARCHAR2 length guidelines
 
-| Pattern                        | Oracle type       |
-|-------------------------------|-------------------|
-| id, code, key (short)         | VARCHAR2(20)      |
-| name, label, title            | VARCHAR2(255)     |
-| email, mail                   | VARCHAR2(255)     |
-| phone, tel, mobile, fax       | VARCHAR2(20)      |
-| zip, postal, postcode         | VARCHAR2(10)      |
-| url, link, href               | VARCHAR2(500)     |
-| description, comment, note    | VARCHAR2(500) or CLOB |
-| address line                  | VARCHAR2(200)     |
-| country_code, currency_code   | CHAR(3)           |
-| flag, active, enabled (0/1)   | CHAR(1)           |
+| Pattern                                        | Oracle type       |
+|-----------------------------------------------|-------------------|
+| id, code, key (short)                         | VARCHAR2(20)      |
+| name, label, title                            | VARCHAR2(255)     |
+| email, mail                                   | VARCHAR2(255)     |
+| phone, tel, mobile, fax                       | VARCHAR2(20)      |
+| zip, postal, postcode                         | VARCHAR2(10)      |
+| url, link, href                               | VARCHAR2(500)     |
+| description, comment, note, text, remarks     | VARCHAR2(4000)    |
+| address line                                  | VARCHAR2(200)     |
+| country_code, currency_code                   | CHAR(3)           |
+| flag, active, enabled (0/1)                   | CHAR(1)           |
+
+### Financial market identifiers
+
+| Pattern                                        | Oracle type       | Notes                          |
+|-----------------------------------------------|-------------------|-------------------------------|
+| isin                                          | CHAR(12)          | ISO 6166 — always 12 chars    |
+| mic, market_id, market_code                   | CHAR(4)           | ISO 10383 — 4 chars           |
+| currency, ccy, currency_code                  | CHAR(3)           | ISO 4217 — 3 chars            |
+| ticker, symbol, ric                           | VARCHAR2(20)      | Variable length               |
+| sedol                                         | CHAR(7)           | 7 chars                       |
+| cusip                                         | CHAR(9)           | 9 chars                       |
+| figi                                          | CHAR(12)          | 12 chars                      |
+| lei                                           | CHAR(20)          | ISO 17442 — 20 chars          |
+| exchange_code, exchange                       | VARCHAR2(10)      |                               |
+| asset_class, instrument_type, product_type   | VARCHAR2(50)      |                               |
+| price, bid, ask, open, high, low, close       | NUMBER(18,8)      | High precision for FX/crypto  |
+| volume, qty, quantity, shares                 | NUMBER(18,0)      | Integer quantities            |
+| notional, amount, nominal                     | NUMBER(18,2)      | Standard monetary             |
+| yield, rate, spread, bps                      | NUMBER(10,6)      | Basis points / rates          |
+| market_cap, nav, aum                          | NUMBER(20,2)      | Large monetary values         |
 
 ## NUMBER precision guidelines
 
@@ -41,30 +61,3 @@
 | 2024-01-31 14:30:00    | YYYY-MM-DD HH24:MI:SS        |
 | 2024-01-31T14:30:00    | YYYY-MM-DD"T"HH24:MI:SS      |
 | 31/01/2024 14:30       | DD/MM/YYYY HH24:MI           |
-
-## CLOB rules
-
-Use CLOB when:
-- max observed length > 2000 characters
-- column name is: description, body, content, html, xml, json, payload, notes, comments, remarks
-- column contains JSON or XML snippets
-
-## Nullability rules
-
-Force NOT NULL for:
-- Any column ending in _id, _code, _key, _num
-- Columns named: id, code, status, type, category, year, date
-- Primary key candidates (single column with all unique non-null values)
-
-## Index suggestions
-
-Always suggest for:
-- Columns ending in _id (foreign key candidate)
-- Columns named status, type, category (low cardinality — bitmap index)
-- Date columns used as partitioning or range filter candidates
-
-Example:
-```sql
-CREATE INDEX IDX_SALES_FACT_YEAR ON SALES_FACT(YEAR);
-CREATE BITMAP INDEX IDX_SALES_FACT_STATUS ON SALES_FACT(STATUS);
-```

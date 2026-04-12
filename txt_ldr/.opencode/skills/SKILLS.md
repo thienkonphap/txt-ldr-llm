@@ -16,8 +16,8 @@ description: >
 
 Given a CSV file, this skill runs a two-stage pipeline:
 
-1. **Rule-based detection** — `scripts/csv_schema_detector.py` samples the file and infers Oracle types (VARCHAR2, NUMBER, DATE, TIMESTAMP, CLOB) with confidence scores.
-2. **AI enrichment** — `scripts/ai_enrich.py` sends the draft schema + sample data to Claude to correct semantic mistakes, tighten nullability, set date masks, and suggest indexes.
+1. **Rule-based detection** — `scripts/csv_schema_detector.py` samples the file and infers Oracle types (VARCHAR2, NUMBER, DATE, TIMESTAMP) with confidence scores.
+2. **AI enrichment** — `scripts/ai_enrich.py` sends the draft schema + sample data to Claude to correct semantic mistakes, refine types, and set date masks.
 3. **Output generation** — produces a `.ctl` SQL*Loader control file and a `.sql` CREATE TABLE DDL, both written to disk plus printed as a summary.
 
 ## When to use this skill
@@ -67,7 +67,7 @@ python scripts/generate.py --csv file.csv --table MY_TABLE --skip-ai
 | File                  | Content                                      |
 |-----------------------|----------------------------------------------|
 | `{table}.ctl`         | SQL*Loader control file                      |
-| `{table}.sql`         | CREATE TABLE DDL + index suggestions         |
+| `{table}.sql`         | CREATE TABLE DDL                             |
 
 Both files are also printed to stdout as part of the summary.
 
@@ -88,7 +88,7 @@ TRAILING NULLCOLS
   AMOUNT               "TO_NUMBER(:AMOUNT, '9999999999999.99')",
   LOAD_DATE            "TO_DATE(:LOAD_DATE, 'YYYY-MM-DD')",
   CREATED_AT           "TO_TIMESTAMP(:CREATED_AT, 'YYYY-MM-DD HH24:MI:SS')",
-  NOTES                CHAR(65535)
+  NOTES                CHAR(4000)
 )
 ```
 
@@ -98,7 +98,6 @@ TRAILING NULLCOLS
 - `NUMBER(p,s)` decimal → `"TO_NUMBER(:COL, 'fmt')"` — mask auto-built from precision/scale
 - `DATE` → `"TO_DATE(:COL, 'mask')"`
 - `TIMESTAMP` → `"TO_TIMESTAMP(:COL, 'mask')"` — SQLLDR cannot cast natively
-- `CLOB` → `CHAR(65535)` — max buffer, Oracle streams into CLOB column
 
 ## AI enrichment details
 
@@ -110,7 +109,6 @@ Claude corrects things the rule engine cannot know from data alone:
 - `zip_code` detected as `NUMBER` → corrected to `VARCHAR2(10)`
 - `email` detected as `VARCHAR2(50)` → corrected to `VARCHAR2(255)`
 - `amount` with all-integer samples → corrected to `NUMBER(15,2)`
-- `created_by` detected as nullable → corrected to NOT NULL
 
 If AI enrichment fails (network error, API error), the pipeline automatically falls back
 to the rule-based schema and logs a warning.
